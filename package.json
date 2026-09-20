@@ -1,0 +1,18 @@
+{
+  "name": "snapscroll",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SnapScroll · 長截圖工坊 — Chrome MV3 長截圖／滾動截圖擴充：整頁拼接、選區、匯出 PNG / JPEG / WebP / PDF",
+  "keywords": ["chrome-extension", "manifest-v3", "screenshot", "full-page-screenshot", "scroll-capture", "pdf", "zero-dependency"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test",
+    "icons": "node tools/make-icons.mjs",
+    "package": "node tools/package.mjs",
+    "e2e": "node tools/e2e/run.mjs",
+    "fixtures": "node tools/serve-fixtures.mjs"
+  }
+}

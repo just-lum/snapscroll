@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll 測試頁 · JS 控制的 hidden 容器</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+
+    body {
+      background: #0b0e13;
+      color: #e8edf6;
+      font-family: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    /* 關鍵：容器是 overflow: hidden——使用者完全滾不動（沒有捲軸、滾輪沒反應），
+     * 但**程式化設定 scrollTop 依然有效**。真實世界裡 modal 打開時的 body、
+     * 以及一堆自製捲動的後台介面都是這個狀態。
+     *
+     * 如果探測只認 overflow:auto|scroll，就會漏掉它，整頁截圖變成一屏重複。 */
+    #viewport {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .band {
+      position: relative;
+      height: 500px;
+      padding: 24px 26px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .band.odd { background: #0e131b; }
+    .band .index {
+      font: 800 64px/1 ui-monospace, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      color: #a78bfa;
+    }
+    .band .caption { margin-top: 6px; color: #7d8aa1; font-size: 13px; }
+    .swatch {
+      position: absolute;
+      left: 28px;
+      bottom: 22px;
+      width: 220px;
+      height: 26px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="viewport"></div>
+  <script>
+    var BANDS = 14;
+    var palette = ['#2f7ff0', '#34d399', '#fbbf24', '#f472b6', '#38bdf8', '#a78bfa'];
+    var html = [];
+    for (var i = 0; i < BANDS; i++) {
+      html.push(
+        '<section class="band' + (i % 2 ? ' odd' : '') + '">' +
+        '  <div class="index">' + String(i + 1).padStart(3, '0') + '</div>' +
+        '  <div class="caption">段落 ' + (i + 1) + ' / ' + BANDS + ' · 捲動在 overflow:hidden 的容器裡</div>' +
+        '  <div class="swatch" style="background:linear-gradient(90deg,' +
+             palette[i % palette.length] + ',' + palette[(i + 3) % palette.length] + ')"></div>' +
+        '</section>'
+      );
+    }
+    document.getElementById('viewport').innerHTML = html.join('');
+
+    window.__fixture = {
+      name: 'scroll-js-container',
+      bands: BANDS,
+      height: function () { return document.getElementById('viewport').scrollHeight; },
+      scrollContainer: '#viewport (overflow:hidden)'
+    };
+  </script>
+</body>
+</html>

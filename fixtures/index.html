@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll 測試頁</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      padding: 46px 32px;
+      background: #0b0e13;
+      color: #e8edf6;
+      font-family: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.65;
+    }
+    h1 { font-size: 22px; letter-spacing: -0.01em; margin: 0 0 4px; }
+    p.lede { color: #7d8aa1; margin: 0 0 26px; font-size: 13.5px; }
+    ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; max-width: 720px; }
+    li {
+      border: 1px solid #1d2635;
+      border-radius: 12px;
+      background: #10151d;
+      padding: 14px 16px;
+    }
+    a { color: #38bdf8; text-decoration: none; font-weight: 650; font-size: 14.5px; }
+    a:hover { text-decoration: underline; }
+    .desc { color: #7d8aa1; font-size: 12.5px; margin-top: 3px; }
+    code { font-family: ui-monospace, Consolas, monospace; color: #a6b3c9; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>SnapScroll 測試頁</h1>
+  <p class="lede">用這些頁面驗證長截圖：拼接、固定元素、懶載入、超長頁面降級。</p>
+  <ul>
+    <li>
+      <a href="/long-page.html">長頁面</a>
+      <div class="desc">固定 20000px 高，每 100px 一條刻度、每 500px 一段編號。用來肉眼檢查有沒有空洞或重疊。可加 <code>?h=60000</code> 試超大尺寸。</div>
+    </li>
+    <li>
+      <a href="/fixed-header.html">固定元素</a>
+      <div class="desc">上／下／右各一個 <code>position:fixed</code> 元素。正確的結果裡，它們各自只該出現一次。</div>
+    </li>
+    <li>
+      <a href="/lazy-images.html">懶載入</a>
+      <div class="desc">內容捲到才載入，頁面會在擷取途中長高。用來驗證高度變動的處理。</div>
+    </li>
+  </ul>
+</body>
+</html>

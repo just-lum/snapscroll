@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll 測試頁 · 懶載入</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: #0b0e13;
+      color: #e8edf6;
+      font-family: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+      background: rgba(11, 14, 19, 0.9);
+      border-bottom: 1px solid #1d2635;
+      z-index: 20;
+      font-weight: 600;
+    }
+    header .stat { margin-left: auto; font: 12px ui-monospace, monospace; color: #6f7c93; }
+    .chunk {
+      height: 620px;
+      padding: 22px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .chunk h2 {
+      margin: 0;
+      font: 700 34px/1 ui-monospace, Consolas, monospace;
+      color: #34d399;
+      font-variant-numeric: tabular-nums;
+    }
+    .slot {
+      flex: 1;
+      border-radius: 10px;
+      border: 1px dashed #24304a;
+      background: #0d1119;
+      display: grid;
+      place-items: center;
+      color: #46536b;
+      font: 12px ui-monospace, monospace;
+      overflow: hidden;
+    }
+    .slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .sentinel { height: 1px; }
+  </style>
+</head>
+<body>
+  <header>
+    懶載入測試
+    <span class="stat" id="stat">已載入 0 / 0</span>
+  </header>
+
+  <main id="content"></main>
+  <div class="sentinel" id="sentinel"></div>
+
+  <script>
+    /* 這個頁面在捲動時才會把內容補進來：
+     * 一開始只有 4 段，捲到底部再追加 4 段。用來驗證「頁面在擷取途中變高」
+     * 這條路徑——walker 必須能接受新的高度繼續拍下去。 */
+    var BATCH = 4;
+    var MAX = 24;
+    var created = 0;
+
+    function makeImage(seed) {
+      var canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 320;
+      var ctx = canvas.getContext('2d');
+      var g = ctx.createLinearGradient(0, 0, 640, 320);
+      g.addColorStop(0, 'hsl(' + ((seed * 47) % 360) + ', 62%, 46%)');
+      g.addColorStop(1, 'hsl(' + ((seed * 97 + 120) % 360) + ', 58%, 32%)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 640, 320);
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      ctx.font = 'bold 96px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(seed), 320, 160);
+      return canvas.toDataURL('image/jpeg', 0.72);
+    }
+
+    var content = document.getElementById('content');
+    var stat = document.getElementById('stat');
+
+    function appendBatch() {
+      var html = [];
+      for (var i = 0; i < BATCH && created < MAX; i++) {
+        created++;
+        html.push(
+          '<section class="chunk">' +
+          '  <h2>段 ' + created + '</h2>' +
+          '  <div class="slot" data-seed="' + created + '" data-y="' + ((created - 1) * 620 + 74) + '">' +
+          '    尚未載入（y ≈ ' + ((created - 1) * 620 + 74) + '）' +
+          '  </div>' +
+          '</section>'
+        );
+      }
+      content.insertAdjacentHTML('beforeend', html.join(''));
+      hydrate();
+      stat.textContent = '已載入 ' + created + ' / ' + MAX + ' · 頁高 ' + document.documentElement.scrollHeight + 'px';
+    }
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var slot = entry.target;
+        if (slot.dataset.done) return;
+        slot.dataset.done = '1';
+        var img = document.createElement('img');
+        img.src = makeImage(Number(slot.dataset.seed));
+        img.alt = 'chunk ' + slot.dataset.seed;
+        slot.textContent = '';
+        slot.appendChild(img);
+        observer.unobserve(slot);
+      });
+    }, { rootMargin: '200px' });
+
+    function hydrate() {
+      content.querySelectorAll('.slot:not([data-observed])').forEach(function (slot) {
+        slot.setAttribute('data-observed', '1');
+        observer.observe(slot);
+      });
+    }
+
+    var endObserver = new IntersectionObserver(function (entries) {
+      if (entries.some(function (e) { return e.isIntersecting; })) {
+        if (created < MAX) appendBatch();
+      }
+    }, { rootMargin: '400px' });
+    endObserver.observe(document.getElementById('sentinel'));
+
+    appendBatch();
+
+    window.__fixture = {
+      name: 'lazy-images',
+      created: function () { return created; },
+      max: MAX,
+      height: function () { return document.documentElement.scrollHeight; }
+    };
+  </script>
+</body>
+</html>

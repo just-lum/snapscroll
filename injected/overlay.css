@@ -1,0 +1,197 @@
+/* SnapScroll — 頁面內 HUD
+ *
+ * 這一張樣式表會被 chrome.scripting.insertCSS 注入到任意網頁裡，
+ * 所以每一條規則都必須自己站得住：不能依賴頁面的 reset、不能被頁面的
+ * `*` 選擇器蓋掉、也不能把版面撐開或觸發任何佈局變化。
+ *
+ * 因此：全部用 !important、全部 position:fixed、全部走 transform 做動畫，
+ * 並且只出現在獨立的 #__snapscroll_* 節點上。
+ */
+
+#__snapscroll_overlay,
+#__snapscroll_picker,
+#__snapscroll_picker *,
+#__snapscroll_overlay * {
+  box-sizing: border-box !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  text-shadow: none !important;
+  font-style: normal !important;
+  float: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  color: inherit !important;
+}
+
+/* ── 進度條 ─────────────────────────────────────────────────────────── */
+
+#__snapscroll_overlay {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 24px !important;
+  transform: translateX(-50%) !important;
+  z-index: 2147483646 !important;
+  pointer-events: auto !important;
+  contain: layout style !important;
+}
+
+#__snapscroll_overlay .ss-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 280px !important;
+  max-width: min(520px, calc(100vw - 32px)) !important;
+  padding: 10px 12px !important;
+  border-radius: 12px !important;
+  background: rgba(17, 19, 24, 0.94) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.38), 0 1px 0 rgba(255, 255, 255, 0.06) inset !important;
+  color: #f2f4f8 !important;
+  font-size: 13px !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+#__snapscroll_overlay[data-state="error"] .ss-row {
+  background: rgba(78, 22, 24, 0.95) !important;
+}
+
+#__snapscroll_overlay .ss-dot {
+  flex: 0 0 auto !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #4ade80 !important;
+  box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55) !important;
+  animation: ss-pulse 1.6s ease-out infinite !important;
+}
+
+#__snapscroll_overlay[data-state="error"] .ss-dot {
+  background: #f87171 !important;
+  animation: none !important;
+}
+
+@keyframes ss-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
+#__snapscroll_overlay .ss-text {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: #f2f4f8 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+#__snapscroll_overlay .ss-bar {
+  flex: 0 0 96px !important;
+  height: 4px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  overflow: hidden !important;
+}
+
+#__snapscroll_overlay .ss-bar > i {
+  display: block !important;
+  width: 0 !important;
+  height: 100% !important;
+  border-radius: 999px !important;
+  background: linear-gradient(90deg, #38bdf8, #4ade80) !important;
+  transition: width 0.18s ease-out !important;
+}
+
+#__snapscroll_overlay .ss-cancel {
+  flex: 0 0 auto !important;
+  padding: 5px 11px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #f2f4f8 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+#__snapscroll_overlay .ss-cancel:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+
+#__snapscroll_overlay .ss-done {
+  flex: 0 0 auto !important;
+  padding: 5px 11px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, #38bdf8, #34d399) !important;
+  color: #06202c !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+#__snapscroll_overlay .ss-done[hidden] {
+  display: none !important;
+}
+
+/* ── 選區 / 元素拾取 ────────────────────────────────────────────────── */
+
+#__snapscroll_picker {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  cursor: crosshair !important;
+  background: rgba(8, 10, 14, 0.42) !important;
+  contain: strict !important;
+}
+
+#__snapscroll_picker.ss-picker-element {
+  cursor: pointer !important;
+}
+
+#__snapscroll_picker .ss-picker-hint {
+  position: fixed !important;
+  top: 16px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  padding: 8px 14px !important;
+  border-radius: 999px !important;
+  background: rgba(17, 19, 24, 0.94) !important;
+  color: #f2f4f8 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
+  white-space: nowrap !important;
+}
+
+#__snapscroll_picker .ss-picker-box {
+  position: fixed !important;
+  display: none !important;
+  border: 2px solid #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.16) !important;
+  box-shadow: 0 0 0 9999px rgba(8, 10, 14, 0.42) !important;
+  pointer-events: none !important;
+}
+
+#__snapscroll_picker .ss-picker-size {
+  position: fixed !important;
+  display: none !important;
+  padding: 2px 7px !important;
+  border-radius: 6px !important;
+  background: rgba(17, 19, 24, 0.94) !important;
+  color: #f2f4f8 !important;
+  font-size: 11px !important;
+  font-variant-numeric: tabular-nums !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #__snapscroll_overlay .ss-dot { animation: none !important; }
+  #__snapscroll_overlay .ss-bar > i { transition: none !important; }
+}

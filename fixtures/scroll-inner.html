@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll 測試頁 · 內層容器捲動</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+
+    /* 兩種都不滾，真正在滾的是下面的 #main。
+     * 不少 SPA 與後台介面就是這個結構。 */
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+
+    body {
+      background: #0b0e13;
+      color: #e8edf6;
+      font-family: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    #main {
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .band {
+      position: relative;
+      height: 500px;
+      padding: 24px 26px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .band.odd { background: #0e131b; }
+    .band .index {
+      font: 800 64px/1 ui-monospace, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      color: #34d399;
+    }
+    .band .caption { margin-top: 6px; color: #7d8aa1; font-size: 13px; }
+    .swatch {
+      position: absolute;
+      left: 28px;
+      bottom: 22px;
+      width: 220px;
+      height: 26px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <main id="main"></main>
+  <script>
+    var BANDS = 14;
+    var palette = ['#2f7ff0', '#34d399', '#fbbf24', '#f472b6', '#38bdf8', '#a78bfa'];
+    var html = [];
+    for (var i = 0; i < BANDS; i++) {
+      html.push(
+        '<section class="band' + (i % 2 ? ' odd' : '') + '">' +
+        '  <div class="index">' + String(i + 1).padStart(3, '0') + '</div>' +
+        '  <div class="caption">段落 ' + (i + 1) + ' / ' + BANDS + ' · 這個頁面的捲動在 #main 上</div>' +
+        '  <div class="swatch" style="background:linear-gradient(90deg,' +
+             palette[i % palette.length] + ',' + palette[(i + 3) % palette.length] + ')"></div>' +
+        '</section>'
+      );
+    }
+    document.getElementById('main').innerHTML = html.join('');
+
+    window.__fixture = {
+      name: 'scroll-inner',
+      bands: BANDS,
+      height: function () { return document.getElementById('main').scrollHeight; },
+      scrollContainer: '#main'
+    };
+  </script>
+</body>
+</html>

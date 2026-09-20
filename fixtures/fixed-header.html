@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll 測試頁 · 固定元素</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: #0b0e13;
+      color: #e8edf6;
+      font-family: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    .top {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+      background: #16202e;
+      border-bottom: 2px solid #fbbf24;
+      z-index: 30;
+      font-weight: 700;
+    }
+    .bottom {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #16202e;
+      border-top: 2px solid #fb7185;
+      z-index: 30;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .side {
+      position: fixed;
+      top: 50%;
+      right: 18px;
+      transform: translateY(-50%);
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #2f7ff0;
+      color: #05121f;
+      font-weight: 700;
+      font-size: 12px;
+      z-index: 30;
+    }
+
+    .pad { height: 60px; }
+    .pad-bottom { height: 54px; }
+
+    section {
+      height: 460px;
+      padding: 26px 26px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    section:nth-of-type(odd) { background: #0e131b; }
+    section .n {
+      font: 800 58px/1 ui-monospace, Consolas, monospace;
+      color: #34d399;
+      font-variant-numeric: tabular-nums;
+    }
+    section .y { color: #7d8aa1; font-size: 13px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="top">固定頁首 · 只應該出現一次</div>
+  <div class="side">固定側欄</div>
+  <div class="bottom">固定頁尾 · 只應該出現一次</div>
+
+  <div class="pad"></div>
+  <main id="content"></main>
+  <div class="pad-bottom"></div>
+
+  <script>
+    var count = 12;
+    var html = [];
+    for (var i = 0; i < count; i++) {
+      html.push(
+        '<section><div class="n">' + String(i + 1).padStart(2, '0') + '</div>' +
+        '<div class="y">y = ' + (60 + i * 460) + ' px</div></section>'
+      );
+    }
+    document.getElementById('content').innerHTML = html.join('');
+    window.__fixture = { name: 'fixed-header', sections: count, height: function () { return document.documentElement.scrollHeight; } };
+  </script>
+</body>
+</html>

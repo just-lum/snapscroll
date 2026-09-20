@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll 影像處理</title>
+</head>
+<body>
+  <!--
+    這個頁面永遠不會顯示給使用者看：它是一個 offscreen document，
+    存在的唯一理由是 service worker 沒有 DOM，而拼圖需要 canvas。
+
+    載入順序有意義：paginate 依賴 limits，所以 limits 必須先到。
+    這些是普通的 classic script，直接掛到 globalThis 上，
+    和 service worker 用 importScripts 載入的是同一批檔案。
+  -->
+  <script src="../engine/limits.js"></script>
+  <script src="../engine/stitch-math.js"></script>
+  <script src="../engine/paginate.js"></script>
+  <script src="../engine/pdf-writer.js"></script>
+  <script src="../common/protocol.js"></script>
+  <script src="offscreen.js"></script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll 測試頁 · 長頁面</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: #0b0e13;
+      color: #e8edf6;
+      font-family: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    /* 固定頁首：長截圖最容易出錯的地方——它會在每一屏重複出現，
+       除非擷取時把它藏起來。 */
+    .fixed-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 20px;
+      background: rgba(11, 14, 19, 0.88);
+      border-bottom: 1px solid #1d2635;
+      z-index: 50;
+    }
+    .fixed-bar b { letter-spacing: 0.02em; }
+    .fixed-bar .meta {
+      margin-left: auto;
+      font: 12px/1.4 ui-monospace, Consolas, monospace;
+      color: #6f7c93;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .spacer { height: 56px; }
+
+    .band {
+      position: relative;
+      height: 500px;
+      padding: 26px 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+    }
+    .band.odd { background: #0e131b; }
+
+    .band .index {
+      font: 800 72px/1 ui-monospace, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.03em;
+      color: #2f7ff0;
+      opacity: 0.9;
+    }
+    .band .caption {
+      margin-top: 6px;
+      color: #7d8aa1;
+      font-size: 13px;
+    }
+
+    /* 每 100px 一條刻度，用來目視檢查拼接有沒有錯位或跳行 */
+    .ticks {
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 78px;
+      border-left: 1px solid rgba(255, 255, 255, 0.07);
+      background-image: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.22) 0 1px,
+        transparent 1px 100px
+      );
+    }
+    .ticks span {
+      position: absolute;
+      right: 8px;
+      font: 11px/1 ui-monospace, Consolas, monospace;
+      color: #55617a;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 一組色帶：整張圖拼好之後掃一眼就知道有沒有段落遺失 */
+    .swatch {
+      position: absolute;
+      left: 28px;
+      bottom: 22px;
+      width: 220px;
+      height: 26px;
+      border-radius: 6px;
+    }
+
+    .footer-pad { height: 120px; }
+    .tail {
+      padding: 24px 28px 60px;
+      color: #8c98ad;
+      font-size: 13px;
+      border-top: 2px solid #2f7ff0;
+    }
+  </style>
+</head>
+<body>
+  <div class="fixed-bar">
+    <b>SNAPSCROLL FIXTURE</b>
+    <span style="color:#7d8aa1;font-size:12.5px">固定頁首 — 除了第一屏以外都不該出現</span>
+    <span class="meta" id="meta">—</span>
+  </div>
+
+  <div class="spacer"></div>
+  <main id="content"></main>
+  <div class="tail">
+    頁面結束。如果你在長截圖裡看到這段文字出現兩次，代表拼接重疊了。
+  </div>
+
+  <script>
+    // 高度可用 ?h=30000 指定；每一段 500px，方便對照驗證。
+    var params = new URLSearchParams(location.search);
+    var totalHeight = Math.max(1000, Math.min(400000, Number(params.get('h')) || 20000));
+    var bandHeight = 500;
+    var bands = Math.ceil(totalHeight / bandHeight);
+
+    var content = document.getElementById('content');
+    var html = [];
+    var palette = ['#2f7ff0', '#34d399', '#fbbf24', '#f472b6', '#38bdf8', '#a78bfa'];
+
+    for (var i = 0; i < bands; i++) {
+      var y = i * bandHeight;
+      var ticks = [];
+      for (var t = 0; t <= bandHeight; t += 100) {
+        if (t % 100 === 0) ticks.push('<span style="top:' + t + 'px">' + (y + t) + '</span>');
+      }
+      html.push(
+        '<section class="band' + (i % 2 ? ' odd' : '') + '" data-y="' + y + '">' +
+        '  <div class="index">' + String(i + 1).padStart(3, '0') + '</div>' +
+        '  <div class="caption">段落 ' + (i + 1) + ' / ' + bands + ' · 起點 y = ' + y + ' px</div>' +
+        '  <div class="ticks">' + ticks.join('') + '</div>' +
+        '  <div class="swatch" style="background:linear-gradient(90deg,' +
+             palette[i % palette.length] + ',' + palette[(i + 3) % palette.length] + ')"></div>' +
+        '</section>'
+      );
+    }
+    content.innerHTML = html.join('');
+
+    document.getElementById('meta').textContent =
+      '頁面高度 ' + document.documentElement.scrollHeight + ' px · 視口 ' + window.innerHeight + ' px';
+
+    /* HUD 探針：在「視口底部、擴充功能 HUD 會佔用的位置」放一塊亮黃色。
+     *
+     * 擴充功能的進度條是 fixed 在底部中央的。它一旦被拍進圖裡，就會蓋掉
+     * 這塊黃色——E2E 只要在第一幀對應的位置採一個像素，就能證明
+     * 「HUD 有沒有被拍進圖裡」。這種東西光靠肉眼盯是盯不住的。 */
+    var probe = document.createElement('div');
+    probe.id = 'hud-probe';
+    probe.style.cssText = 'position:absolute;left:50%;transform:translateX(-50%);' +
+      'width:300px;height:44px;border-radius:12px;background:#ffe066;z-index:1';
+    probe.style.top = Math.max(4, window.innerHeight - 68) + 'px';
+    content.appendChild(probe);
+
+    // E2E 會讀這個
+    window.__fixture = {
+      name: 'long-page',
+      requestedHeight: totalHeight,
+      bandHeight: bandHeight,
+      bands: bands,
+      height: function () { return document.documentElement.scrollHeight; }
+    };
+  </script>
+</body>
+</html>

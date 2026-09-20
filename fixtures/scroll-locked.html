@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll 測試頁 · 捲動被腳本接管</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #0b0e13;
+      color: #e8edf6;
+      font-family: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    .band {
+      position: relative;
+      height: 500px;
+      padding: 24px 26px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .band.odd { background: #0e131b; }
+    .band .index {
+      font: 800 64px/1 ui-monospace, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      color: #fb7185;
+    }
+    .band .caption { margin-top: 6px; color: #7d8aa1; font-size: 13px; }
+    .swatch {
+      position: absolute;
+      left: 28px;
+      bottom: 22px;
+      width: 220px;
+      height: 26px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <main id="content"></main>
+  <script>
+    var BANDS = 14;
+    var palette = ['#2f7ff0', '#34d399', '#fbbf24', '#f472b6', '#38bdf8', '#a78bfa'];
+    var html = [];
+    for (var i = 0; i < BANDS; i++) {
+      html.push(
+        '<section class="band' + (i % 2 ? ' odd' : '') + '">' +
+        '  <div class="index">' + String(i + 1).padStart(3, '0') + '</div>' +
+        '  <div class="caption">段落 ' + (i + 1) + ' / ' + BANDS + ' · 這一頁的捲動被腳本接管</div>' +
+        '  <div class="swatch" style="background:linear-gradient(90deg,' +
+             palette[i % palette.length] + ',' + palette[(i + 3) % palette.length] + ')"></div>' +
+        '</section>'
+      );
+    }
+    document.getElementById('content').innerHTML = html.join('');
+
+    /* 模擬「捲動被自訂腳本接管」的頁面：任何捲動都立刻被推回頂端。
+     *
+     * 這種頁面最危險——scrollHeight 很正常、看起來應該能滾，但任何捲動
+     * 指令都會被無聲地打回去。如果不檢查捲動有沒有真的生效，擴充功能會
+     * 拍完十幾幀、拼出一張尺寸完全正確、內容卻是同一屏重複的圖。 */
+    window.addEventListener('scroll', function () {
+      if (window.scrollY !== 0) window.scrollTo(0, 0);
+    }, { passive: true });
+
+    window.__fixture = {
+      name: 'scroll-locked',
+      bands: BANDS,
+      height: function () { return document.documentElement.scrollHeight; },
+      scrollContainer: 'locked-by-script'
+    };
+  </script>
+</body>
+</html>

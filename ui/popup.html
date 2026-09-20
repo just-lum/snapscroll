@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body class="popup">
+
+  <header class="head">
+    <div class="brand"><span class="mark"></span><span>SnapScroll</span></div>
+    <div class="head-actions">
+      <button type="button" id="btnHistory" class="icon-btn" data-i18n-title="popup_history" title="歷史紀錄">
+        <svg viewBox="0 0 24 24"><path d="M12 8v5l3 2"/><path d="M3.5 12a8.5 8.5 0 1 0 2.2-5.7"/><path d="M3 4v4h4"/></svg>
+      </button>
+      <button type="button" id="btnOptions" class="icon-btn" data-i18n-title="popup_options" title="設定">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.5-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4.6a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 11a2 2 0 1 1 0 4z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="page-card reveal">
+    <div class="page-title" id="pageTitle">讀取中…</div>
+    <div class="page-host" id="pageHost">—</div>
+    <div class="ruler">
+      <div class="ruler-track"><div class="ruler-viewport" id="rulerFill" style="width:6%"></div></div>
+      <div class="ruler-note">
+        <span id="rulerLeft">—</span>
+        <span id="rulerRight">—</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="block reveal">
+    <div class="label"><span data-i18n="popup_mode">擷取模式</span></div>
+    <div class="segmented" id="modeGroup">
+      <button type="button" class="seg" data-mode="full" data-i18n="mode_full">整頁</button>
+      <button type="button" class="seg" data-mode="viewport" data-i18n="mode_viewport">可視</button>
+      <button type="button" class="seg" data-mode="region" data-i18n="mode_region">框選</button>
+      <button type="button" class="seg" data-mode="element" data-i18n="mode_element">元素</button>
+      <button type="button" class="seg" data-mode="manual" data-i18n="mode_manual">手动</button>
+    </div>
+  </section>
+
+  <section class="block reveal">
+    <div class="label"><span data-i18n="popup_format">輸出格式</span></div>
+    <div class="chips" id="formatGroup">
+      <button type="button" class="chip" data-format="png">PNG</button>
+      <button type="button" class="chip" data-format="jpeg">JPEG</button>
+      <button type="button" class="chip" data-format="webp">WebP</button>
+      <button type="button" class="chip" data-format="pdf">PDF</button>
+    </div>
+
+    <div class="field" id="qualityField" style="margin-top:12px">
+      <span class="field-label" data-i18n="popup_quality">畫質</span>
+      <input type="range" id="quality" min="30" max="100" step="1">
+      <span class="field-value" id="qualityValue">92</span>
+    </div>
+  </section>
+
+  <div id="notice" class="notice" data-level="info" hidden></div>
+
+  <section class="block reveal">
+    <div class="label"><span data-i18n="popup_diag_title">診斷</span></div>
+    <div class="diag-row">
+      <span class="diag-key" data-i18n="popup_diag_mode">捲動方式</span>
+      <span class="diag-val mono" id="diagMode">—</span>
+    </div>
+    <div class="diag-row">
+      <span class="diag-key" data-i18n="popup_diag_cap">高度上限</span>
+      <span class="diag-val mono" id="diagCap">—</span>
+    </div>
+    <div class="diag-row">
+      <span class="diag-key" data-i18n="popup_diag_heights">內容高</span>
+      <span class="diag-val mono" id="diagHeights">—</span>
+    </div>
+    <div class="row" style="margin-top:10px;gap:8px">
+      <button type="button" class="btn-ghost" id="btnProbe" style="flex:1" data-i18n="popup_diag_probe">測試滾動</button>
+      <button type="button" class="btn-ghost" id="btnDiag" style="flex:1" data-i18n="popup_diag_copy">複製診斷</button>
+    </div>
+    <p class="card-hint" id="diagNote" style="margin:8px 0 0">
+      <span data-i18n="popup_diag_hint">不確定為什麼只截到一屏時，先按「測試滾動」。</span>
+    </p>
+  </section>
+
+  <section class="block reveal">
+    <div class="row between">
+      <label class="switch-row" style="flex:1">
+        <span class="sw-text">
+          <span class="sw-title" data-i18n="opt_hide_fixed">隱藏固定元素</span>
+          <span class="sw-desc" data-i18n="opt_hide_fixed_desc">避免頁首頁尾每一屏都重複出現</span>
+        </span>
+      </label>
+      <button type="button" class="switch is-on" id="swHideFixed" role="switch" aria-checked="true"></button>
+    </div>
+    <div class="row between">
+      <label class="switch-row" style="flex:1">
+        <span class="sw-text">
+          <span class="sw-title" data-i18n="opt_lazy">等待懶載入</span>
+          <span class="sw-desc" data-i18n="opt_lazy_desc">頁面變高時再多等一會</span>
+        </span>
+      </label>
+      <button type="button" class="switch is-on" id="swLazy" role="switch" aria-checked="true"></button>
+    </div>
+  </section>
+
+  <details class="acc">
+    <summary data-i18n="popup_advanced">進階選項</summary>
+    <div class="acc-body">
+      <div class="grid-2" style="grid-template-columns:1fr 1fr;gap:10px">
+        <label>
+          <span class="field-label" data-i18n="opt_paper">PDF 紙張</span>
+          <select id="paper">
+            <option value="a4">A4</option>
+            <option value="a3">A3</option>
+            <option value="letter">Letter</option>
+            <option value="legal">Legal</option>
+            <option value="tabloid">Tabloid</option>
+          </select>
+        </label>
+        <label>
+          <span class="field-label" data-i18n="opt_orientation">方向</span>
+          <select id="orientation">
+            <option value="portrait" data-i18n="opt_portrait">直式</option>
+            <option value="landscape" data-i18n="opt_landscape">橫式</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="field" style="margin-top:12px">
+        <span class="field-label" data-i18n="opt_margin">頁邊留白</span>
+        <input type="range" id="margin" min="0" max="72" step="6">
+        <span class="field-value" id="marginValue">36</span>
+      </div>
+
+      <div class="field" style="margin-top:6px">
+        <span class="field-label" data-i18n="opt_delay">每屏等待</span>
+        <input type="range" id="delay" min="0" max="1200" step="20">
+        <span class="field-value" id="delayValue">260</span>
+      </div>
+
+      <div class="field" style="margin-top:14px">
+        <span class="field-label" data-i18n="opt_filename">檔名模板</span>
+        <input type="text" id="filenameTemplate" spellcheck="false" placeholder="{date}_{host}_{title}">
+      </div>
+    </div>
+  </details>
+
+  <div class="progress" id="progress">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">—</div>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn-primary" id="btnCapture" data-i18n="popup_capture">開始擷取</button>
+  </div>
+
+  <script src="../engine/limits.js"></script>
+  <script src="../engine/paginate.js"></script>
+  <script src="../common/protocol.js"></script>
+  <script src="../common/settings.js"></script>
+  <script src="../common/i18n.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

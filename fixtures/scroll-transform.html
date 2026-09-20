@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll 測試頁 · transform 驅動的非原生捲動</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #0b0e13;
+      color: #e8edf6;
+      font-family: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    /* 這是真正的「非原生捲動」，也是最難纏的一種：
+     *   - html / body 都 overflow:hidden，捲不動
+     *   - 內容放在 position:fixed 的軌道上（fixed 不參與 scrollHeight 計算）
+     *   - 位置靠 transform 改變
+     *
+     * 結果：所有原生高度來源都等於視口高、可捲動距離是 0，
+     * 但內容明明有 7000px 排在視口底下。
+     *
+     * 原生截圖路徑取不到這些內容。正確的行為是**明確說出來**，
+     * 而不是默默交出一張只有一屏的圖，讓人以為工具壞了。 */
+    #track {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      will-change: transform;
+    }
+
+    .band {
+      position: relative;
+      height: 500px;
+      padding: 24px 26px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .band.odd { background: #0e131b; }
+    .band .index {
+      font: 800 64px/1 ui-monospace, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+      color: #f472b6;
+    }
+    .band .caption { margin-top: 6px; color: #7d8aa1; font-size: 13px; }
+    .swatch {
+      position: absolute;
+      left: 28px;
+      bottom: 22px;
+      width: 220px;
+      height: 26px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="track"></div>
+  <script>
+    var BANDS = 14;
+    var palette = ['#2f7ff0', '#34d399', '#fbbf24', '#f472b6', '#38bdf8', '#a78bfa'];
+    var html = [];
+    for (var i = 0; i < BANDS; i++) {
+      html.push(
+        '<section class="band' + (i % 2 ? ' odd' : '') + '">' +
+        '  <div class="index">' + String(i + 1).padStart(3, '0') + '</div>' +
+        '  <div class="caption">段落 ' + (i + 1) + ' / ' + BANDS + ' · 這一頁用 transform 捲動</div>' +
+        '  <div class="swatch" style="background:linear-gradient(90deg,' +
+             palette[i % palette.length] + ',' + palette[(i + 3) % palette.length] + ')"></div>' +
+        '</section>'
+      );
+    }
+    document.getElementById('track').innerHTML = html.join('');
+
+    /* 用 transform 模擬捲動。原生 scrollY 永遠是 0。 */
+    var offset = 0;
+    var track = document.getElementById('track');
+    function paint() {
+      track.style.transform = 'translateY(' + (-offset) + 'px)';
+    }
+    window.addEventListener('wheel', function (e) {
+      offset = Math.max(0, Math.min(6000, offset + e.deltaY));
+      paint();
+    }, { passive: true });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown') { offset = Math.min(6000, offset + 200); paint(); }
+      if (e.key === 'ArrowUp') { offset = Math.max(0, offset - 200); paint(); }
+    });
+    paint();
+
+    window.__fixture = {
+      name: 'scroll-transform',
+      bands: BANDS,
+      height: function () { return document.documentElement.scrollHeight; },
+      trackHeight: function () { return track.scrollHeight; },
+      scrollContainer: 'transform'
+    };
+  </script>
+</body>
+</html>
