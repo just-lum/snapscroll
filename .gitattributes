@@ -1,0 +1,13 @@
+# 統一行尾。否則 Windows 上檢出是 CRLF、其他平台是 LF，
+# 同一份檔案會因為行尾不同而產生整檔 diff。
+* text=auto eol=lf
+
+# 二進位檔不做行尾轉換
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.gif  binary
+*.zip  binary
+*.crx  binary
+*.pdf  binary
