@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll 設定</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body class="page">
+  <div class="shell">
+
+    <header class="shell-head reveal">
+      <div>
+        <h1 data-i18n="options_title">SnapScroll 設定</h1>
+        <p data-i18n="options_subtitle">這裡是每次擷取的預設值；彈出面板裡的臨時調整不會覆蓋它們。</p>
+      </div>
+      <div class="row">
+        <button type="button" class="btn-ghost" id="btnHistory" data-i18n="options_history">歷史紀錄</button>
+        <button type="button" class="btn-ghost" id="btnReset" data-i18n="options_reset">恢復預設</button>
+      </div>
+    </header>
+
+    <section class="card reveal">
+      <h2 data-i18n="options_group_capture">擷取</h2>
+      <p class="card-hint" data-i18n="options_group_capture_hint">整頁長截圖的核心參數。等待時間越長越穩，但整張圖也就越慢。</p>
+
+      <div class="grid-2">
+        <label>
+          <span class="field-label" data-i18n="options_mode">預設模式</span>
+          <select id="mode">
+            <option value="full" data-i18n="mode_full">整頁</option>
+            <option value="viewport" data-i18n="mode_viewport">可視區域</option>
+            <option value="region" data-i18n="mode_region">框選範圍</option>
+            <option value="element" data-i18n="mode_element">點選元素</option>
+            <option value="manual" data-i18n="mode_manual">手動滾動</option>
+          </select>
+        </label>
+
+        <label>
+          <span class="field-label" data-i18n="options_format">預設格式</span>
+          <select id="format">
+            <option value="png">PNG</option>
+            <option value="jpeg">JPEG</option>
+            <option value="webp">WebP</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="field" style="margin-top:14px">
+        <span class="field-label" data-i18n="options_quality">畫質</span>
+        <input type="range" id="quality" min="30" max="100" step="1">
+        <span class="field-value" id="qualityValue">92</span>
+      </div>
+
+      <div class="field">
+        <span class="field-label" data-i18n="options_frame_delay">每屏等待</span>
+        <input type="range" id="frameDelay" min="0" max="1200" step="20">
+        <span class="field-value" id="frameDelayValue">260 ms</span>
+      </div>
+
+      <div class="field">
+        <span class="field-label" data-i18n="options_start_delay">起始延遲</span>
+        <input type="range" id="startDelay" min="0" max="5000" step="100">
+        <span class="field-value" id="startDelayValue">0 ms</span>
+      </div>
+
+      <div class="field">
+        <span class="field-label" data-i18n="options_max_height">高度上限</span>
+        <input type="number" id="maxPageHeight" min="1000" max="1000000" step="1000" style="max-width:150px">
+        <span class="field-value" style="min-width:auto;color:var(--dim-2)" data-i18n="options_px">px</span>
+      </div>
+
+      <div style="margin-top:14px">
+        <div class="switch-row">
+          <span class="sw-text">
+            <span class="sw-title" data-i18n="opt_hide_fixed">隱藏固定元素</span>
+            <span class="sw-desc" data-i18n="opt_hide_fixed_desc">避免頁首頁尾每一屏都重複出現</span>
+          </span>
+          <button type="button" class="switch" id="swHideFixed" role="switch"></button>
+        </div>
+        <div class="switch-row">
+          <span class="sw-text">
+            <span class="sw-title" data-i18n="opt_hide_scrollbars">隱藏捲軸</span>
+            <span class="sw-desc" data-i18n="opt_hide_scrollbars_desc">長圖右側不會留下一條深色軌道</span>
+          </span>
+          <button type="button" class="switch" id="swHideScrollbars" role="switch"></button>
+        </div>
+        <div class="switch-row">
+          <span class="sw-text">
+            <span class="sw-title" data-i18n="opt_lazy">等待懶載入</span>
+            <span class="sw-desc" data-i18n="opt_lazy_desc">頁面變高時再多等一會</span>
+          </span>
+          <button type="button" class="switch" id="swLazy" role="switch"></button>
+        </div>
+        <div class="switch-row">
+          <span class="sw-text">
+            <span class="sw-title" data-i18n="opt_overlay">顯示頁面進度條</span>
+            <span class="sw-desc" data-i18n="opt_overlay_desc">在頁面底部顯示進度與取消按鈕</span>
+          </span>
+          <button type="button" class="switch" id="swOverlay" role="switch"></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card reveal">
+      <h2 data-i18n="options_group_pdf">PDF</h2>
+      <p class="card-hint" data-i18n="options_group_pdf_hint">PDF 裡的每一頁都是一張 JPEG，所以畫質滑桿同時決定 PDF 的品質。</p>
+
+      <div class="grid-2">
+        <label>
+          <span class="field-label" data-i18n="options_paper">紙張</span>
+          <select id="paper">
+            <option value="a4">A4</option>
+            <option value="a3">A3</option>
+            <option value="letter">Letter</option>
+            <option value="legal">Legal</option>
+            <option value="tabloid">Tabloid</option>
+          </select>
+        </label>
+        <label>
+          <span class="field-label" data-i18n="options_orientation">方向</span>
+          <select id="orientation">
+            <option value="portrait" data-i18n="opt_portrait">直式</option>
+            <option value="landscape" data-i18n="opt_landscape">橫式</option>
+          </select>
+        </label>
+        <label>
+          <span class="field-label" data-i18n="options_pdf_mode">分頁方式</span>
+          <select id="pdfMode">
+            <option value="fit-width" data-i18n="pdf_mode_fit_width">依紙寬縮放後分頁</option>
+            <option value="single" data-i18n="pdf_mode_single">單頁長圖</option>
+            <option value="fit-page" data-i18n="pdf_mode_fit_page">整張縮進一頁</option>
+          </select>
+        </label>
+        <label>
+          <span class="field-label" data-i18n="options_margin">頁邊留白（pt）</span>
+          <input type="number" id="marginPt" min="0" max="144" step="6">
+        </label>
+      </div>
+    </section>
+
+    <section class="card reveal">
+      <h2 data-i18n="options_group_output">輸出</h2>
+      <p class="card-hint" data-i18n="options_group_output_hint">檔案會存到瀏覽器的下載資料夾。</p>
+
+      <label>
+        <span class="field-label" data-i18n="options_filename">檔名模板</span>
+        <input type="text" id="filenameTemplate" spellcheck="false">
+      </label>
+      <p class="card-hint" style="margin-top:6px" data-i18n="options_filename_hint">
+        可用變數：{date} {time} {datetime} {host} {title} {mode} {format} {width} {height} {index}
+      </p>
+
+      <label style="display:block;margin-top:12px">
+        <span class="field-label" data-i18n="options_folder">子資料夾</span>
+        <input type="text" id="folder" spellcheck="false" placeholder="SnapScroll">
+      </label>
+
+      <label style="display:block;margin-top:12px">
+        <span class="field-label" data-i18n="options_preview">檔名預覽</span>
+        <input type="text" id="filenamePreview" readonly class="mono" style="color:var(--dim)">
+      </label>
+
+      <div style="margin-top:14px">
+        <div class="switch-row">
+          <span class="sw-text">
+            <span class="sw-title" data-i18n="opt_open_result">完成後開啟結果頁</span>
+            <span class="sw-desc" data-i18n="opt_open_result_desc">預覽、裁剪、換格式再存一次</span>
+          </span>
+          <button type="button" class="switch" id="swOpenResult" role="switch"></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card reveal">
+      <h2 data-i18n="options_group_advanced">進階</h2>
+      <p class="card-hint" data-i18n="options_group_advanced_hint">抓幀格式影響記憶體用量；PNG 最忠實但最佔空間。</p>
+
+      <div class="grid-2">
+        <label>
+          <span class="field-label" data-i18n="options_capture_format">抓幀格式</span>
+          <select id="captureFormat">
+            <option value="auto" data-i18n="cap_format_auto">自動（PNG 輸出用 PNG）</option>
+            <option value="png">一律 PNG</option>
+            <option value="jpeg">一律 JPEG（省記憶體）</option>
+          </select>
+        </label>
+        <label>
+          <span class="field-label" data-i18n="options_retry">重試次數</span>
+          <input type="number" id="retryLimit" min="0" max="30" step="1">
+        </label>
+        <label>
+          <span class="field-label" data-i18n="options_history_limit">保留歷史筆數</span>
+          <input type="number" id="keepHistory" min="0" max="200" step="1">
+        </label>
+      </div>
+    </section>
+
+    <section class="card reveal">
+      <h2 data-i18n="options_group_data">資料</h2>
+      <p class="card-hint" data-i18n="options_group_data_hint">歷史紀錄存在瀏覽器本機（IndexedDB），不會上傳到任何地方。</p>
+      <div class="row">
+        <button type="button" class="btn-ghost" id="btnClearHistory" data-i18n="options_clear_history">清空歷史紀錄</button>
+        <span class="mono" id="historyInfo" style="color:var(--dim)">—</span>
+      </div>
+    </section>
+
+    <p class="card-hint reveal" id="status" style="text-align:right" data-i18n="options_autosave">設定會自動儲存</p>
+  </div>
+
+  <script src="../engine/limits.js"></script>
+  <script src="../engine/filename.js"></script>
+  <script src="../common/settings.js"></script>
+  <script src="../common/history.js"></script>
+  <script src="../common/i18n.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

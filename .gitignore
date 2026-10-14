@@ -1,0 +1,19 @@
+# Node
+node_modules/
+package-lock.json
+
+# 打包產物
+dist/
+*.zip
+*.crx
+
+# E2E 執行時產生的下載檔與截圖
+.tmp/
+tools/e2e/out/
+
+# 編輯器與系統
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
