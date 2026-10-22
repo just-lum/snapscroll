@@ -183,7 +183,7 @@ PDF 輸出時分段高度等於頁面高度，每頁僅進行一次 JPEG 編碼�
 ## 開發
 
 ```bash
-node --test                            # 單元測試（136 項）
+node --test                            # 單元測試（165 項）
 node tools/package.mjs                 # 打包為 dist/snapscroll-<version>.zip
 node tools/verify-dist.mjs             # 驗證發佈包能否被 Chrome 載入
 node tools/make-icons.mjs              # 從程式碼重新生成圖示
@@ -199,7 +199,7 @@ node tools/e2e/run.mjs                 # 端對端測試（需 Playwright）
 
 `test` — 單元測試 → 打包 → 零依賴驗證 → 用系統 `unzip` 交叉核對條目數，產物以 artifact 形式上傳。兩套獨立的 zip 解析器數出來的條目數必須一致，才不會因為自己的解析器有 bug 而漏檢。
 
-`e2e` — 安裝 Playwright 與 Chromium，用真實瀏覽器載入擴充、實際擷取 52 項。單元測試只覆蓋 `engine/` 的純函式；`background/capture-controller.js`、`injected/page-agent.js`、`ui/popup.js`、`offscreen/offscreen.js` 這四千餘行全靠這一組守。
+`e2e` — 安裝 Playwright 與 Chromium，用真實瀏覽器載入擴充、實際擷取 52 項。單元測試覆蓋 `engine/` 的純函式，以及 `common/` 的設定收斂、協定常數與翻譯完整性；`background/capture-controller.js`、`injected/page-agent.js`、`ui/popup.js`、`offscreen/offscreen.js` 這四千餘行全靠這一組守。
 
 ### 測試頁
 
