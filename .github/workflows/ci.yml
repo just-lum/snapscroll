@@ -65,6 +65,9 @@ jobs:
         run: |
           set -euo pipefail
           npm install --no-audit --no-fund
+          # 依賴真的裝上才往下走。run.mjs 解析不到 Playwright 時只吐一行安裝提示
+          # 就 exit 2，看起來像環境問題，實際是 package.json 沒帶 devDependencies。
+          node -e "console.log('playwright', require('playwright/package.json').version)"
           npx playwright install --with-deps chromium
 
       - name: 端對端測試（52 項）
