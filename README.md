@@ -88,10 +88,9 @@ PDF 分頁方式：
 ```bash
 git clone https://github.com/just-lum/snapscroll.git
 cd snapscroll
-node tools/make-icons.mjs
 ```
 
-圖示由程式碼生成，需先執行一次。接著依上述步驟 2–4 載入該資料夾。
+圖示（`icons/`）已隨倉庫提供，無需生成，直接依上述步驟 2–4 載入該資料夾即可。若要重新繪製圖示，執行 `node tools/make-icons.mjs`。
 
 ---
 
@@ -183,11 +182,18 @@ PDF 輸出時分段高度等於頁面高度，每頁僅進行一次 JPEG 編碼�
 
 ```bash
 node --test                            # 單元測試（136 項）
-node tools/make-icons.mjs              # 從程式碼生成圖示
 node tools/package.mjs                 # 打包為 dist/snapscroll-<version>.zip
+node tools/verify-dist.mjs             # 驗證發佈包能否被 Chrome 載入
+node tools/make-icons.mjs              # 從程式碼重新生成圖示
 node tools/serve-fixtures.mjs --open   # 測試頁伺服器（http://127.0.0.1:8788）
 node tools/e2e/run.mjs                 # 端對端測試（需 Playwright）
 ```
+
+`node tools/package.mjs` 在寫檔前會跑兩道檢查，任一不符即以非零碼中止：發佈包不得含 `tools/`、`tests/`、`fixtures/`、`.github/`、`package.json` 與版本控制檔案；`manifest.json` 引用到的每個檔案都必須真的在包裡。
+
+`node tools/verify-dist.mjs` 接著把打好的 zip 當唯讀檔案系統複驗一次，不依賴任何套件、也不解壓到磁碟：`manifest.json` 是否為首個項目、manifest 引用、`importScripts` 目標、HTML 的 `src` / `href` 是否齊全，以及有無開發檔案混入。報告寫入 `dist/verify-report.txt`。
+
+推送與 Pull Request 會觸發 GitHub Actions（`.github/workflows/ci.yml`）：單元測試 → 打包 → 零依賴驗證 → 用系統 `unzip` 交叉核對條目數，產物以 artifact 形式上傳。兩套獨立的 zip 解析器數出來的條目數必須一致，才不會因為自己的解析器有 bug 而漏檢。
 
 ### 測試頁
 
