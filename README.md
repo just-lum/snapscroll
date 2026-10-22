@@ -1,5 +1,7 @@
 # SnapScroll · 長截圖工坊
 
+[![ci](https://github.com/just-lum/snapscroll/actions/workflows/ci.yml/badge.svg)](https://github.com/just-lum/snapscroll/actions/workflows/ci.yml)
+
 Chrome / Edge 的 Manifest V3 擴充功能，把整頁網頁擷取成一張長圖或一份 PDF。
 
 純本機執行，零執行期依賴，無建置步驟。
@@ -193,7 +195,11 @@ node tools/e2e/run.mjs                 # 端對端測試（需 Playwright）
 
 `node tools/verify-dist.mjs` 接著把打好的 zip 當唯讀檔案系統複驗一次，不依賴任何套件、也不解壓到磁碟：`manifest.json` 是否為首個項目、manifest 引用、`importScripts` 目標、HTML 的 `src` / `href` 是否齊全，以及有無開發檔案混入。報告寫入 `dist/verify-report.txt`。
 
-推送與 Pull Request 會觸發 GitHub Actions（`.github/workflows/ci.yml`）：單元測試 → 打包 → 零依賴驗證 → 用系統 `unzip` 交叉核對條目數，產物以 artifact 形式上傳。兩套獨立的 zip 解析器數出來的條目數必須一致，才不會因為自己的解析器有 bug 而漏檢。
+推送與 Pull Request 會觸發 GitHub Actions（`.github/workflows/ci.yml`），兩個 job 並行跑：
+
+`test` — 單元測試 → 打包 → 零依賴驗證 → 用系統 `unzip` 交叉核對條目數，產物以 artifact 形式上傳。兩套獨立的 zip 解析器數出來的條目數必須一致，才不會因為自己的解析器有 bug 而漏檢。
+
+`e2e` — 安裝 Playwright 與 Chromium，用真實瀏覽器載入擴充、實際擷取 52 項。單元測試只覆蓋 `engine/` 的純函式；`background/capture-controller.js`、`injected/page-agent.js`、`ui/popup.js`、`offscreen/offscreen.js` 這四千餘行全靠這一組守。
 
 ### 測試頁
 
@@ -211,7 +217,9 @@ node tools/e2e/run.mjs                 # 端對端測試（需 Playwright）
 
 `tools/e2e/run.mjs` 啟動瀏覽器、載入擴充功能、執行實際擷取，並驗證產出檔案。測試時將擴充功能複製至暫存目錄，並在該副本的 manifest 加入 `<all_urls>` 權限（自動化環境沒有使用者手勢，`activeTab` 不會生效）。
 
-Playwright 非必要依賴；未安裝時會顯示安裝指令。
+Playwright 是唯一的開發相依（`devDependencies`），只在跑 e2e 時需要：`npm install && npx playwright install chromium`。擴充功能本體零執行期依賴，發佈包裡也不會出現 `node_modules/`。
+
+全量跑一次是 52 項，涵蓋整頁拼接、四種捲動模式、`overflow:hidden` 的 JS 容器、`transform` 假捲動、PDF 檢視器、選區框選、JPEG 輸出與三個擴充頁面的載入無錯。
 
 ---
 
