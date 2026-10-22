@@ -1,6 +1,6 @@
 {
   "name": "snapscroll",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "SnapScroll · 長截圖工坊 — Chrome MV3 長截圖／滾動截圖擴充：整頁拼接、選區、匯出 PNG / JPEG / WebP / PDF",
   "keywords": [
