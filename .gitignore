@@ -11,6 +11,9 @@ dist/
 .tmp/
 tools/e2e/out/
 
+# 本機執行日誌
+_out_*.txt
+
 # 編輯器與系統
 .vscode/
 .idea/

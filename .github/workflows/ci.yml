@@ -48,3 +48,33 @@ jobs:
           path: dist/*.zip
           if-no-files-found: error
           retention-days: 14
+
+  # 單元測試只覆蓋 engine/ 的純函式；擷取流程、SW、popup 全靠這一組
+  # 在真 Chromium 裡跑出來的結果。它與 test 並行，不佔用打包時間。
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 安裝相依與 Chromium
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: 端對端測試（52 項）
+        run: node tools/e2e/run.mjs
+
+      - name: 上傳 e2e 產出
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-output
+          path: tools/e2e/out/
+          if-no-files-found: ignore
+          retention-days: 7
