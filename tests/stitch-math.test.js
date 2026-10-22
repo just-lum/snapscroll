@@ -98,6 +98,27 @@ test('regionDrawRect：多幀拼出連續的選區圖', () => {
   assert.equal(cursor, 2500 * scale);
 });
 
+test('regionDrawRect：來源橫向偏移要跟著選區 x 走', () => {
+  const frames = SP.planRegionFrames({ x: 437, y: 0, width: 320, height: 400 }, 1000, 400);
+  assert.ok(frames.length > 0);
+  for (const s of [1, 2, 1.5]) {
+    const r = M.regionDrawRect(frames[0], s, Math.round(320 * s), 437);
+    assert.equal(r.sx, Math.round(437 * s), '選區 x 必須換算成來源像素');
+    assert.equal(r.dx, 0, '結果圖本身從 0 開始，位移只發生在來源端');
+    assert.equal(r.sw, Math.round(320 * s));
+    assert.equal(r.dw, Math.round(320 * s));
+  }
+});
+
+test('regionDrawRect：沒有 offsetX 時退回 0，不會出現 NaN', () => {
+  const frames = SP.planRegionFrames({ x: 0, y: 0, width: 200, height: 300 }, 800, 300);
+  const a = M.regionDrawRect(frames[0], 1, 200);
+  const b = M.regionDrawRect(frames[0], 1, 200, 0);
+  assert.deepEqual(a, b);
+  assert.equal(M.regionDrawRect(frames[0], 1, 200, undefined).sx, 0);
+  assert.ok(Number.isFinite(M.regionDrawRect(frames[0], 1, 200, NaN).sx));
+});
+
 /* ── 畫布尺寸 ───────────────────────────────────────────────────────── */
 
 test('canvasSizeFor：整頁畫布尺寸隨比例放大', () => {

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>SnapScroll fixture · 选区坐标映射</title>
+  <!-- 四个象限各一种纯色，用来验证「拖哪里就截哪里」。
+       region.x 曾经从未参与计算，选右下象限却得到左下象限的颜色，
+       只比对图片尺寸的断言完全抓不到，必须采像素。 -->
+  <style>
+    html, body { margin: 0; padding: 0; }
+    body { height: 2000px; background: #ff0000; }
+    .q { position: absolute; width: 600px; height: 1000px; }
+    #tr { left: 600px; top: 0;     background: #00ff00; }
+    #bl { left: 0;     top: 1000px; background: #0000ff; }
+    #br { left: 600px; top: 1000px; background: #ffffff; }
+  </style>
+</head>
+<body>
+  <div class="q" id="tr"></div>
+  <div class="q" id="bl"></div>
+  <div class="q" id="br"></div>
+</body>
+</html>

@@ -71,14 +71,20 @@
   }
 
   /* 選區／元素截圖的落點：frame 來自 scroll-plan 的 planRegionFrames()，
-   * 帶 {srcY, srcH, dstY}（全部 CSS px，相對於各幀與結果圖）。 */
-  function regionDrawRect(frame, scale, imageWidth) {
+   * 帶 {srcY, srcH, dstY}（全部 CSS px，相對於各幀與結果圖）。
+   *
+   * offsetX 是選區在文件座標裡的左邊界。沒有它，成品會從視口左緣開始裁，
+   * 選一個靠右的元素就會截到左邊完全不一樣的內容——實測拖在右下象限
+   * 卻得到左下象限的顏色，就是這個欄位曾經不存在的關係。 */
+  function regionDrawRect(frame, scale, imageWidth, offsetX) {
     var s = num(scale, 1) || 1;
     var iw = Math.max(1, Math.round(num(imageWidth, 1)));
+    var ox = Math.max(0, num(offsetX, 0));
     var srcY = Math.max(0, num(frame && frame.srcY, 0));
     var srcH = Math.max(0, num(frame && frame.srcH, 0));
     var dstY = Math.max(0, num(frame && frame.dstY, 0));
 
+    var sx = Math.round(ox * s);
     var sy = Math.round(srcY * s);
     var syEnd = Math.round((srcY + srcH) * s);
     var dy = Math.round(dstY * s);
@@ -89,7 +95,7 @@
     if (sh < 1) sh = 1;
     if (dh < 1) dh = 1;
 
-    return { sx: 0, sy: sy, sw: iw, sh: sh, dx: 0, dy: dy, dw: iw, dh: dh };
+    return { sx: sx, sy: sy, sw: iw, sh: sh, dx: 0, dy: dy, dw: iw, dh: dh };
   }
 
   /* 目標畫布的像素尺寸 */

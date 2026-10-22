@@ -258,6 +258,8 @@
       viewportHeight: Math.max(1, Math.round(p.viewportHeight || 1)),
       cssWidth: Math.max(1, Math.round(mode === 'region' ? (p.regionWidth || 1) : (p.pageWidth || 1))),
       cssHeight: Math.max(1, Math.round(mode === 'region' ? (p.regionHeight || 1) : (p.pageHeight || 1))),
+      /* 選區左邊界（文件座標 CSS px）。少了它，選區截圖會永遠從視口左緣裁。 */
+      regionX: mode === 'region' ? Math.max(0, Math.round(p.regionX || 0)) : 0,
       pdf: p.pdf || { paper: 'a4', orientation: 'portrait', marginPt: 36, mode: 'fit-width', keepPageSize: true },
       meta: p.meta || {},
       scale: 0,
@@ -288,7 +290,7 @@
 
         var frame = payload.frame || {};
         var rect = s.mode === 'region'
-          ? MATH.regionDrawRect(frame, s.scale, s.outputWidth)
+          ? MATH.regionDrawRect(frame, s.scale, s.outputWidth, s.regionX)
           : MATH.frameDrawRect(frame, s.scale, s.outputWidth);
 
         /* 手動滾動模式可能滾得比原本量到的高度還深，輸出高度要跟著長 */
@@ -318,10 +320,18 @@
           if (srcTop + height > bitmap.height) height = bitmap.height - srcTop;
           if (height <= 0) continue;
 
+          /* 選區可能比視口還寬（選中的元素比視窗大時），來源右側就會超出
+           * 抓回來的圖。drawImage 對超界來源矩形是「裁來源 + 按比例縮目標」，
+           * 那會把整塊內容壓扁；這裡先自己截到圖邊界，並讓目標寬度跟著
+           * 減少同樣的像素數，右邊留空而不是變形。 */
+          var srcW = Math.min(rect.sw, bitmap.width - rect.sx);
+          if (srcW <= 0) continue;
+          var dstW = Math.min(rect.dw, srcW);
+
           tile.ctx.drawImage(
             bitmap,
-            rect.sx, srcTop, rect.sw, height,
-            rect.dx, top - tile.y0, rect.dw, height
+            rect.sx, srcTop, srcW, height,
+            rect.dx, top - tile.y0, dstW, height
           );
         }
 

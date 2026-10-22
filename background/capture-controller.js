@@ -593,6 +593,7 @@
           pageHeight: pageHeight,
           regionWidth: region ? region.width : 0,
           regionHeight: region ? region.height : 0,
+          regionX: region ? region.x : 0,
           pdf: settings.pdf,
           meta: { title: meta.title, url: meta.url, subject: tab.url || '' }
         });

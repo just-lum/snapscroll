@@ -590,6 +590,85 @@ async function main() {
         `圖 ${size ? size.width + '×' + size.height : '?'}，拖曳 400×500 × ${scale.toFixed(2)}`);
     }
 
+    /* ── 7b. 框選內容位置：拖哪裡就要截哪裡 ──────────────────────
+     * 回歸測試。region.x 以前從來沒被用到，成品永遠從視口左緣開始裁，
+     * 拖在右下象限卻拿到左下象限的顏色。尺寸斷言抓不到這種錯，
+     * 只能採像素。fixture 四個象限各一色，右下是純白。 */
+    if (!ONLY || ONLY === 'region') {
+      await page.goto(`http://127.0.0.1:${PORT}/region-quadrants.html`, { waitUntil: 'load' });
+      await page.waitForTimeout(400);
+
+      const quadTabId = await sw.evaluate(async (needle) => {
+        const tabs = await chrome.tabs.query({});
+        const hit = tabs.find((t) => t.url && t.url.indexOf(needle) >= 0);
+        return hit ? hit.id : null;
+      }, `127.0.0.1:${PORT}`);
+
+      const quadBefore = new Set(fs.readdirSync(downloadDir));
+      const quadPending = sw.evaluate(([id, opts]) => runCapture(id, opts), [quadTabId, {
+        mode: 'region',
+        format: 'png',
+        frameDelayMs: 100,
+        openResultPage: false,
+        keepHistory: 0,
+        filenameTemplate: 'e2e-region-quadrants'
+      }]);
+
+      await page.waitForTimeout(1200);
+      /* 右下象限占 600..1200 × 1000..2000，整块都在白色里 */
+      await page.mouse.move(700, 1200);
+      await page.mouse.down();
+      await page.mouse.move(900, 1400, { steps: 12 });
+      await page.mouse.up();
+
+      const quadResult = await quadPending;
+      if (!quadResult || quadResult.ok === false) {
+        throw new Error('框選內容驗證擷取失敗：' + ((quadResult && quadResult.error) || '未知'));
+      }
+      const quadReported = (quadResult.files || []).map((f) => f.filename).filter((f) => f && fs.existsSync(f));
+      const quadFile = quadReported.length ? quadReported[0] : await waitForDownload(downloadDir, quadBefore);
+      const quadSize = pngSize(fs.readFileSync(quadFile));
+
+      const quadProbeName = `__verify-quad-${Date.now()}.png`;
+      const quadProbePath = path.join(FIXTURES, quadProbeName);
+      fs.copyFileSync(quadFile, quadProbePath);
+      try {
+        const pq = await context.newPage();
+        /* 驗證頁必須與圖片同源，否則 canvas 被污染，getImageData 會拋 SecurityError */
+        await pq.goto(`http://127.0.0.1:${PORT}/index.html`);
+        const samples = await pq.evaluate(async (src) => {
+          const img = new Image();
+          img.src = src;
+          await img.decode();
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          const pts = [
+            ['左上', Math.round(img.width * 0.1), Math.round(img.height * 0.1)],
+            ['中心', Math.round(img.width * 0.5), Math.round(img.height * 0.5)],
+            ['右下', Math.round(img.width * 0.9), Math.round(img.height * 0.9)]
+          ];
+          return pts.map((p) => {
+            const d = ctx.getImageData(p[1], p[2], 1, 1).data;
+            return { band: p[0], rgb: [d[0], d[1], d[2]] };
+          });
+        }, `http://127.0.0.1:${PORT}/${quadProbeName}`);
+        await pq.close();
+
+        const detail = samples.map((s) => `${s.band}=rgb(${s.rgb.join(',')})`).join(' ');
+        const allWhite = samples.every((s) => s.rgb.every((v) => v >= 245));
+        record('框選內容位置正確（拖右下象限 → 整張純白）', allWhite,
+          detail + '（藍=丟掉 x，紅=丟掉 x 與 y）');
+        record('框選內容驗證的成品尺寸與控制器回報一致',
+          !!quadSize && quadSize.width === quadResult.outputWidth && quadSize.height === quadResult.outputHeight,
+          quadSize ? `圖 ${quadSize.width}×${quadSize.height} vs 回報 ${quadResult.outputWidth}×${quadResult.outputHeight}` : '無法解析');
+      } finally {
+        fs.rmSync(quadProbePath, { force: true });
+      }
+    }
+
     /* ── 8. 三種非典型捲動：body 捲動 / 內層容器 / 完全滾不動 ──
      * 這三種頁面在真實網站上都不罕見，而且都會讓「整頁截圖」默默失敗：
      * 讀 window.scrollY 永遠得到 0，看起來像頁面根本沒動。 */
