@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 單元測試
+        run: node --test
+
+      - name: 打包
+        run: node tools/package.mjs
+
+      - name: 驗證發佈包（零依賴解析）
+        run: node tools/verify-dist.mjs
+
+      # verify-dist.mjs 自己手寫 ZIP 解析器，解析器有 bug 就會漏檢。
+      # 這裡用系統 unzip 獨立再數一次，兩邊條目數必須一致。
+      - name: 交叉核對（系統 unzip）
+        run: |
+          set -euo pipefail
+          ZIP="dist/snapscroll-$(node -p "require('./manifest.json').version").zip"
+          unzip -t "$ZIP" > /dev/null
+          unzip -Z1 "$ZIP" | grep -v '/$' > /tmp/entries.txt
+          OWN=$(grep '^INFO  條目數 ' dist/verify-report.txt | awk '{print $NF}')
+          SYS=$(wc -l < /tmp/entries.txt)
+          echo "零依賴解析 ${OWN} 項 / 系統 unzip ${SYS} 項"
+          test "$OWN" = "$SYS" || { echo "條目數不一致"; exit 1; }
+          if grep -E '^(tools|tests|fixtures|\.github)/|(^|/)\.(git|gitignore|gitattributes)|^package\.json$' /tmp/entries.txt; then
+            echo "發佈包混入開發檔案"; exit 1
+          fi
+          echo "交叉核對通過"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snapscroll-zip
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 14
