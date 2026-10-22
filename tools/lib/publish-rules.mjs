@@ -17,7 +17,13 @@ export const FORBIDDEN = [
   /^pnpm-lock\.yaml$/,
   /^yarn\.lock$/,
   /^package\.json$/,
-  /(^|\/)node_modules\//
+  /(^|\/)node_modules\//,
+  /* 執行產物：腳本輸出日誌、打包工作區、e2e 臨時檔。
+   * 這些被 .gitignore 擋在版本庫外，但打包是走檔案系統遍歷，
+   * 所以必須在這裡再擋一次——_out_e2e-full.txt 就進過發佈包。 */
+  /^_out_/,
+  /^dist\//,
+  /^\.tmp\//
 ];
 
 /** 回傳混進發佈包的開發檔案名單（空陣列＝乾淨）。 */

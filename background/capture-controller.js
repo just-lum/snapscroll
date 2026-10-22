@@ -234,7 +234,25 @@
       throw fail(PROTO.ERR.INJECT_FAILED, '頁面代理沒有回應');
     }
 
+    /* 收工：把注入到頁面的東西全部撤掉。
+     * 注入與清理必須成對出現、且走同一個函式——分開放就會出現「這裡清了
+     * 那裡忘了」。probeScroll 就漏過一次：它只發 AG_RESTORE，從來不
+     * removeCSS，於是每探測一次頁面上就多留一份樣式。
+     * 兩個操作都各自吞錯：頁面可能早就關了，那不是失敗。 */
+    async function unloadAgent(tabId) {
+      try {
+        await chrome.scripting.removeCSS({
+          target: { tabId: tabId },
+          files: ['injected/overlay.css']
+        });
+      } catch (e) { /* 可能從未注入成功 */ }
+      try {
+        await agentCall(tabId, PROTO.MSG.AG_RESTORE);
+      } catch (e) { /* 頁面可能已經關閉 */ }
+    }
+
     /* ── 活動分頁 ───────────────────────────────────────────────────
+
      * `captureVisibleTab(windowId)` 抓的是「這個視窗目前顯示的那一頁」，
      * 而不是我們手上那個 tabId。只要活動分頁不是目標分頁——使用者中途
      * 切走了、擴充功能自己開了設定頁、或開了新視窗——後面每一幀都會
@@ -408,11 +426,25 @@
 
     /* ── 主流程 ─────────────────────────────────────────────────── */
 
+    /* 單一執行槽。`state.running` 要等 emit 之後才為真，而 emit 之前隔著
+     * 好幾個 await（storage 往返、tabs.get）。兩個 START 擠進這個窗口就會
+     * 同時通過檢查：同一頁被注入兩份代理、兩套抓幀交錯、下載兩個檔案。
+     * 門禁必須在進入流程之前同步落下，而且不能用 UI 狀態當鎖。 */
+    var busy = false;
+
     async function run(tabId, rawOptions) {
-      if (state.running) {
+      if (busy || state.running) {
         throw fail(PROTO.ERR.UNKNOWN, '已經有一個擷取正在進行');
       }
+      busy = true;
+      try {
+        return await runExclusive(tabId, rawOptions);
+      } finally {
+        busy = false;
+      }
+    }
 
+    async function runExclusive(tabId, rawOptions) {
       var settings = SETTINGS.normalize(rawOptions);
       cancelRequested = false;
       finishRequested = false;
@@ -448,13 +480,11 @@
       });
       startKeepAlive();
 
-      var injected = false;
       var finalResult = null;
 
       try {
         await ensureOffscreen();
         await injectAgent(tabId);
-        injected = true;
 
         /* 起始延遲：設定頁上真的有這個滑桿，使用者拖了它就該生效。
          * （先前的版本只存了值、從沒讀過，等於騙人。） */
@@ -935,10 +965,7 @@
         throw err;
       } finally {
         /* 頁面一定要還原：這是唯一不能省的一步 */
-        if (injected) {
-          try { await chrome.scripting.removeCSS({ target: { tabId: tabId }, files: ['injected/overlay.css'] }); } catch (e) { /* 可能從未注入成功 */ }
-          try { await agentCall(tabId, PROTO.MSG.AG_RESTORE); } catch (e) { /* 頁面可能已經關閉 */ }
-        }
+        await unloadAgent(tabId);
         if (!finalResult) {
           /* 沒有產出就沒有 blob 要留，直接收掉 */
           try { await offscreenCall(PROTO.MSG.OS_ABORT, {}); } catch (e) { /* 可能還沒開始 */ }
@@ -968,9 +995,11 @@
       }
 
       await ensureActiveTab(tabId);
-      await injectAgent(tabId);
 
+      /* 注入放進 try 裡：insertCSS 成功、executeScript 失敗時，樣式已經在
+       * 頁面上了，finally 必須照樣清得掉。 */
       try {
+        await injectAgent(tabId);
         var info = await agentCall(tabId, PROTO.MSG.AG_MEASURE);
         var probed = await agentCall(tabId, PROTO.MSG.AG_PROBE_SCROLL, {});
         var viewport = Math.max(1, info.viewportHeight);
@@ -1010,7 +1039,7 @@
           readyState: probed.readyState || null
         };
       } finally {
-        try { await agentCall(tabId, PROTO.MSG.AG_RESTORE); } catch (e) { /* 忽略 */ }
+        await unloadAgent(tabId);
       }
     }
 

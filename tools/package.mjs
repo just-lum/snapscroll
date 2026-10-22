@@ -71,6 +71,9 @@ function collect(dir, base, out) {
       continue;
     }
     if (!entry.isFile()) continue;
+    /* 與 verify-dist 共用同一份黑名單：兩邊各維護一套的話，這裡漏掉的
+     * 那條規則，驗證端也照樣放行——e2e 的執行日誌就是這樣溜進發佈包的。 */
+    if (devFileLeaks([relative]).length > 0) continue;
     if (EXCLUDE_FILES.has(entry.name)) continue;
     if (EXCLUDE_PREFIXES.some(prefix => relative.startsWith(prefix))) continue;
     if (entry.name.startsWith('~$')) continue;

@@ -163,6 +163,13 @@ async function runCapture(tabId, overrides) {
   lastResult = result;
   await controller.release();
 
+  /* release 關掉 offscreen document，而 blob URL 是綁在那個 document 的
+   * origin 上的——關掉之後全部失效。留著它們只會讓 QUERY_STATE 的消費者
+   * 拿到一組必然失敗的連結，所以清空，並用旗標說明「檔案已落地、URL 已回收」。
+   * 歷史紀錄走的是 storeHistory 事先讀好的 Blob，不受影響。 */
+  lastResult.blobUrls = [];
+  lastResult.blobUrlsReleased = true;
+
   broadcast(PROTO.MSG.FINISHED, result);
 
   /* 不保留歷史時就不開結果頁：那裡是從 IndexedDB 讀資料的，記錄已經被
