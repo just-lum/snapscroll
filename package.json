@@ -12,6 +12,7 @@
     "test": "node --test",
     "icons": "node tools/make-icons.mjs",
     "package": "node tools/package.mjs",
+    "verify": "node tools/verify-dist.mjs",
     "e2e": "node tools/e2e/run.mjs",
     "fixtures": "node tools/serve-fixtures.mjs"
   }

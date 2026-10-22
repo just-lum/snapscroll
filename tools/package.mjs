@@ -1,6 +1,7 @@
 /* SnapScroll — 打包成可上傳的 zip
  *
  *   node tools/package.mjs
+ *   node tools/verify-dist.mjs      # 複驗產出的 zip 能不能被 Chrome 載入
  *
  * 產出 dist/snapscroll-<version>.zip，內容就是擴充功能的根目錄。
  * 自己寫 ZIP 是因為這個專案不對外依賴任何套件，而 ZIP 的格式本身不複雜：
@@ -10,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
+import { devFileLeaks, manifestRefs } from './lib/publish-rules.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
@@ -21,14 +23,19 @@ const EXCLUDE_DIRS = new Set([
 ]);
 
 const EXCLUDE_FILES = new Set([
-  'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', '.DS_Store', 'Thumbs.db'
+  'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', '.DS_Store', 'Thumbs.db',
+  '.gitignore', '.gitattributes', '.gitmodules', '.editorconfig', '.npmrc',
+  /* package.json 是 Node 開發用的，擴充功能執行期不讀它 */
+  'package.json'
 ]);
 
-/* 開發用、不進 zip 的路徑前綴（相對於專案根） */
+/* 開發用、不進 zip 的路徑前綴（相對於專案根）。
+ * 這裡排的是 tools/ 整個目錄，不是 tools/e2e——打包腳本自己不該進發佈包。 */
 const EXCLUDE_PREFIXES = [
-  'tools/e2e',
+  'tools/',
   'fixtures/',
-  'tests/'
+  'tests/',
+  '.github/'
 ];
 
 /* ── CRC32 ──────────────────────────────────────────────────────── */
@@ -71,6 +78,29 @@ function collect(dir, base, out) {
     out.push({ name: relative, data: fs.readFileSync(absolute) });
   }
   return out;
+}
+
+/* ── 發佈門禁 ───────────────────────────────────────────────────── */
+
+/* 規則本體在 tools/lib/publish-rules.mjs，打包與驗證共用同一份名單。
+ * 這裡只負責在寫檔前攔一次，讓問題在本地就爆，不必等 CI。 */
+function assertPublishable(files, manifest) {
+  const names = files.map(file => file.name);
+
+  const leaked = devFileLeaks(names);
+  if (leaked.length > 0) {
+    console.error('打包中止：發佈包混入開發檔案');
+    for (const name of leaked) console.error(`   · ${name}`);
+    process.exit(1);
+  }
+
+  const present = new Set(names);
+  const missing = manifestRefs(manifest).filter(ref => !present.has(ref));
+  if (missing.length > 0) {
+    console.error('打包中止：manifest 引用的檔案不在包裡');
+    for (const ref of missing) console.error(`   · ${ref}`);
+    process.exit(1);
+  }
 }
 
 /* ── ZIP 寫入 ───────────────────────────────────────────────────── */
@@ -154,6 +184,8 @@ function buildZip(files) {
 const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
 const files = collect(ROOT, '', []);
 
+assertPublishable(files, manifest);
+
 /* manifest 一定要在 zip 的第一個項目，Chrome 的檢查工具會先讀它 */
 files.sort((a, b) => {
   if (a.name === 'manifest.json') return -1;
@@ -170,6 +202,7 @@ const totalRaw = files.reduce((n, f) => n + f.data.length, 0);
 console.log(`打包完成：${path.relative(ROOT, outFile)}`);
 console.log(`  檔案 ${files.length} 個 · 原始 ${(totalRaw / 1024).toFixed(1)} KB · 壓縮後 ${(zip.length / 1024).toFixed(1)} KB`);
 console.log(`  版本 ${manifest.version}`);
+console.log(`  下一步：node tools/verify-dist.mjs`);
 
 for (const f of files.slice(0, 12)) console.log(`   · ${f.name}`);
 if (files.length > 12) console.log(`   · … 其餘 ${files.length - 12} 個`);
